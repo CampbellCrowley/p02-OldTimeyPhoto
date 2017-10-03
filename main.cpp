@@ -1,10 +1,10 @@
 #include <iostream>
 #include <vector>
-#include "../Bitmap/bitmap.h"
+#include "bitmap.h"
 
 using namespace std;
 
-bool Main(string inPath, string outPath) {
+bool Main(string inPath, string outPath, bool moreOpts = false) {
   Bitmap bmp;
   if (inPath.length() < 1) {
     cout << "Please enter an image name:\n";
@@ -20,8 +20,8 @@ bool Main(string inPath, string outPath) {
 
   vector<vector<Pixel>> pixels = bmp.toPixelMatrix();
 
-  for (int i=0; i<pixels.size(); i++) {
-    for (int j=0; j<pixels[i].size(); j++) {
+  for (int i = 0; i < (int)pixels.size(); i++) {
+    for (int j = 0; j < (int)pixels[i].size(); j++) {
       float newValue =
           (pixels[i][j].red + pixels[i][j].green + pixels[i][j].blue) / 3;
       pixels[i][j] = Pixel(newValue, newValue, newValue);
@@ -50,18 +50,21 @@ bool Main(string inPath, string outPath) {
 int main(int argc, char *argv[]) {
   string inPath = "";
   string outPath = "";
+  bool moreOpts = true;
   if (argc == 2) {
     inPath = argv[1];
   } else if (argc == 3) {
     inPath = argv[1];
     outPath = argv[2];
+    moreOpts = false;
   } else if (argc > 3) {
     cerr << "Too many arguments.\n";
   }
 
-  while (Main(inPath, outPath)) {
+  while (Main(inPath, outPath, moreOpts)) {
     inPath = "";
     outPath = "";
+    moreOpts = true;
   }
   return 0;
 }
