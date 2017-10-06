@@ -7,16 +7,21 @@
 
 using namespace std;
 
+// Returns num after rectifying between min and max.
 float Rectify(float num, float min, float max) {
   return ((num < min ? min : (num > max ? max : num)));
 }
+
+// The main program to be looped if necessary.
 bool Main(string inPath, string outPath, bool moreOpts = true) {
   Bitmap bmp;
+  // Determine file to load.
   if (inPath.length() < 1) {
     cout << "Please enter an image name:\n";
     getline(cin, inPath);
   }
 
+  // Attempt to open file. If it fails, allow user to choose new file.
   bmp.open(inPath);
   if (!bmp.isImage()) {
     cerr << Campbell::Color::red
@@ -26,8 +31,15 @@ bool Main(string inPath, string outPath, bool moreOpts = true) {
     return true;
   }
 
+  // Convert image to 2D vector of Pixels.
   vector<vector<Pixel>> pixels = bmp.toPixelMatrix();
 
+  // Let user pick options of moreOpts are enabled.
+  bool makeBW = true;
+  if (moreOpts) {
+    cout << "Would you like to make the image black and white? (Y/n): ";
+    makeBW = Campbell::Strings::getYesNo();
+  }
   bool addNoise = false;
   if (moreOpts) {
     cout << "Would you like to add film grain? (y/N): ";
@@ -52,20 +64,43 @@ bool Main(string inPath, string outPath, bool moreOpts = true) {
       }
     }
   }
+  bool invertColors = false;
+  if (moreOpts) {
+    cout << "Would you like to invert all colors? (y/N): ";
+    invertColors = Campbell::Strings::getYesNo(false);
+  }
 
+  // Process image.
   for (int i = 0; i < (int)pixels.size(); i++) {
     for (int j = 0; j < (int)pixels[i].size(); j++) {
-      float newValue =
-          (pixels[i][j].red + pixels[i][j].green + pixels[i][j].blue) / 3;
-      if (addNoise) {
-        newValue += rand() % 50 - 25;
+      if (invertColors) {
+        pixels[i][j] = Pixel(255 - pixels[i][j].red, 255 - pixels[i][j].green,
+                             255 - pixels[i][j].blue);
       }
-      newValue = Rectify(newValue, 0, 255);
-      pixels[i][j] = Pixel(newValue, newValue, newValue);
+      if (makeBW) {
+        float newValue =
+            (pixels[i][j].red + pixels[i][j].green + pixels[i][j].blue) / 3;
+        if (addNoise) {
+          newValue += rand() % 50 - 25;
+        }
+        newValue = Rectify(newValue, 0, 255);
+        pixels[i][j] = Pixel(newValue, newValue, newValue);
+      } else if (addNoise) {
+        float newRed = Rectify(pixels[i][j].red += rand() % 50 - 25, 0, 255);
+        float newGreen =
+            Rectify(pixels[i][j].green += rand() % 50 - 25, 0, 255);
+        float newBlue = Rectify(pixels[i][j].blue += rand() % 50 - 25, 0, 255);
+        pixels[i][j] = Pixel(newRed, newGreen, newBlue);
+      } else if (!invertColors) {
+        i = pixels.size();
+        break;
+      }
     }
   }
 
+  // Add Border
   for (int i = 0; i < borderWidth; i++) {
+    // Half the border is white, then black.
     int color = (i < borderWidth / 2) ? 0 : 255;
     pixels.insert(pixels.begin(),
                   vector<Pixel>(pixels[0].size(), {color, color, color}));
@@ -76,24 +111,32 @@ bool Main(string inPath, string outPath, bool moreOpts = true) {
     }
   }
 
+  // TODO: Determine if this fails.
   bmp.fromPixelMatrix(pixels);
 
+  // Determine output location.
   if (outPath.length() < 1) {
     cout << "Please enter the place to save the image (nothing for "
             "./oldtimey.bmp): ";
     getline(cin, outPath);
-  }
+    }
+    if (outPath.length() < 1) {
+      outPath = "oldtimey.bmp";
+    }
 
-  if (outPath.length() < 1) {
-    outPath = "oldtimey.bmp";
-  }
+    // Save file.
+    // TODO: Get feedback if this fails.
+    bmp.save(outPath);
 
-  bmp.save(outPath);
+    cout << Campbell::Color::green << "File saved to " << outPath << endl
+         << Campbell::Color::reset;
 
-  cout << Campbell::Color::green << "File saved to " << outPath << endl
-       << Campbell::Color::reset;
+    if (moreOpts) {
+      cout<< "Would you like to edit another photo? (Y/n): ";
+      return Campbell::Strings::getYesNo();
+    }
 
-  return false;
+    return false;
 }
 
 int main(int argc, char *argv[]) {
@@ -101,6 +144,7 @@ int main(int argc, char *argv[]) {
   string inPath = "";
   string outPath = "";
   bool moreOpts = true;
+  // Read arguments passed in from the command line.
   if (argc == 2) {
     inPath = argv[1];
   } else if (argc == 3) {
@@ -112,9 +156,12 @@ int main(int argc, char *argv[]) {
     moreOpts = string(argv[3]) != "false" && string(argv[3]) != "0";
   } else if (argc > 4) {
     cerr << Campbell::Color::red << "Too many arguments.\n"
-         << Campbell::Color::reset;
+         << Campbell::Color::reset
+         << "First argument is file to read, second is file to write to, and "
+            "third is true or false whether to prompt for more options.\n";
   }
 
+  // Loop the main program until the user decides to exit.
   while (Main(inPath, outPath, moreOpts)) {
     inPath = "";
     outPath = "";
