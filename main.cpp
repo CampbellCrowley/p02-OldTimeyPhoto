@@ -1,9 +1,9 @@
-#include <iostream>
-#include <vector>
 #include <cstdlib>
 #include <ctime>
-#include "bitmap.h"
+#include <iostream>
+#include <vector>
 #include "CampbellLib/CampbellLib.h"
+#include "bitmap.h"
 
 using namespace std;
 
@@ -12,12 +12,29 @@ float Rectify(float num, float min, float max) {
   return ((num < min ? min : (num > max ? max : num)));
 }
 
+// Check if file will be able to save to specified path.
+bool isValidOutPath(string filename) {
+  std::ofstream file(filename.c_str(), std::ios::out | std::ios::binary);
+
+  if (file.fail()) {
+    cerr << Campbell::Color::red << filename
+         << " could not be opened for editing. Is it already open by another "
+            "program or is it read-only?\n"
+         << Campbell::Color::reset;
+    file.close();
+    return false;
+  } else {
+    file.close();
+    return true;
+  }
+}
+
 // The main program to be looped if necessary.
 bool Main(string inPath, string outPath, bool moreOpts = true) {
   Bitmap bmp;
   // Determine file to load.
   if (inPath.length() < 1) {
-    cout << "Please enter an image name:\n";
+    cout << "Please enter an image name to load: ";
     getline(cin, inPath);
   }
 
@@ -48,7 +65,7 @@ bool Main(string inPath, string outPath, bool moreOpts = true) {
   float borderWidth = 0;
   if (moreOpts) {
     cout << "Would you like to add a border? (y/N): ";
-    if(Campbell::Strings::getYesNo(false)) {
+    if (Campbell::Strings::getYesNo(false)) {
       while (true) {
         string input;
         cout << "How wide should the border be in pixels? ";
@@ -115,28 +132,34 @@ bool Main(string inPath, string outPath, bool moreOpts = true) {
   bmp.fromPixelMatrix(pixels);
 
   // Determine output location.
-  if (outPath.length() < 1) {
-    cout << "Please enter the place to save the image (nothing for "
-            "./oldtimey.bmp): ";
-    getline(cin, outPath);
+  while (true) {
+    if (outPath.length() < 1) {
+      cout << "Please enter the place to save the image (nothing for "
+              "./oldtimey.bmp): ";
+      getline(cin, outPath);
     }
     if (outPath.length() < 1) {
       outPath = "oldtimey.bmp";
     }
-
-    // Save file.
-    // TODO: Get feedback if this fails.
-    bmp.save(outPath);
-
-    cout << Campbell::Color::green << "File saved to " << outPath << endl
-         << Campbell::Color::reset;
-
-    if (moreOpts) {
-      cout<< "Would you like to edit another photo? (Y/n): ";
-      return Campbell::Strings::getYesNo();
+    if (!isValidOutPath(outPath)) {
+      outPath = "";
+    } else {
+      break;
     }
+  }
 
-    return false;
+  // Save file.
+  bmp.save(outPath);
+
+  cout << Campbell::Color::green << "File saved to " << outPath << endl
+       << Campbell::Color::reset;
+
+  if (moreOpts) {
+    cout << "Would you like to edit another photo? (Y/n): ";
+    return Campbell::Strings::getYesNo();
+  }
+
+  return false;
 }
 
 int main(int argc, char *argv[]) {
@@ -145,20 +168,23 @@ int main(int argc, char *argv[]) {
   string outPath = "";
   bool moreOpts = true;
   // Read arguments passed in from the command line.
-  if (argc == 2) {
+  if (argc >= 2) {
     inPath = argv[1];
-  } else if (argc == 3) {
-    inPath = argv[1];
+  }
+  if (argc >= 3) {
     outPath = argv[2];
-  } else if (argc == 4) {
-    inPath = argv[1];
-    outPath = argv[2];
+  }
+  if (argc >= 4) {
     moreOpts = string(argv[3]) != "false" && string(argv[3]) != "0";
-  } else if (argc > 4) {
+  }
+  if (argc > 4) {
     cerr << Campbell::Color::red << "Too many arguments.\n"
          << Campbell::Color::reset
          << "First argument is file to read, second is file to write to, and "
             "third is true or false whether to prompt for more options.\n";
+    inPath = "";
+    outPath = "";
+    moreOpts = true;
   }
 
   // Loop the main program until the user decides to exit.
