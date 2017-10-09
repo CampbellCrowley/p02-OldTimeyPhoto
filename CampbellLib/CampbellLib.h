@@ -22,15 +22,15 @@ class Color {
 
  public:
   // Escape codes for terminal colors.
-  static constexpr const char *reset = "\033[1;0m";
-  static constexpr const char *black = "\033[1;30m";
-  static constexpr const char *red = "\033[1;31m";
-  static constexpr const char *green = "\033[1;32m";
-  static constexpr const char *yellow = "\033[1;33m";
-  static constexpr const char *blue = "\033[1;34m";
-  static constexpr const char *magenta = "\033[1;35m";
-  static constexpr const char *cyan = "\033[1;36m";
-  static constexpr const char *white = "\033[1;37m";
+  static const char *reset;
+  static const char *black;
+  static const char *red;
+  static const char *green;
+  static const char *yellow;
+  static const char *blue;
+  static const char *magenta;
+  static const char *cyan;
+  static const char *white;
 };  // class Color
 
 // For things relating to arrays.
@@ -98,6 +98,7 @@ class Test {
       PASS();
     } else {
       FAIL(actual, expected);
+      exit(1);
     }
   }
   // Checks that two numbers are similar, to account for floating point

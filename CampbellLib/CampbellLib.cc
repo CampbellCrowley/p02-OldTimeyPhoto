@@ -7,6 +7,16 @@ bool Common::isdigit(const char input) {
   return false;
 }
 
+const char *Color::reset = "\033[1;0m";
+const char *Color::black = "\033[1;30m";
+const char *Color::red = "\033[1;31m";
+const char *Color::green = "\033[1;32m";
+const char *Color::yellow = "\033[1;33m";
+const char *Color::blue = "\033[1;34m";
+const char *Color::magenta = "\033[1;35m";
+const char *Color::cyan = "\033[1;36m";
+const char *Color::white = "\033[1;37m";
+
 bool Strings::isNumber(const char input[]) {
   bool firstDecimal = true;
   for (int i = 0; i < Arrays::length(input); i++) {
