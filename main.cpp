@@ -49,7 +49,7 @@ bool Main(string inPath, string outPath, bool moreOpts = true) {
   }
 
   // Convert image to 2D vector of Pixels.
-  vector<vector<Pixel>> pixels = bmp.toPixelMatrix();
+  vector<vector<Pixel> > pixels = bmp.toPixelMatrix();
 
   // Let user pick options of moreOpts are enabled.
   bool makeBW = true;
@@ -119,9 +119,11 @@ bool Main(string inPath, string outPath, bool moreOpts = true) {
   for (int i = 0; i < borderWidth; i++) {
     // Half the border is white, then black.
     int color = (i < borderWidth / 2) ? 0 : 255;
-    pixels.insert(pixels.begin(),
-                  vector<Pixel>(pixels[0].size(), {color, color, color}));
-    pixels.push_back(vector<Pixel>(pixels[0].size(), {color, color, color}));
+    pixels.insert(
+        pixels.begin(),
+        vector<Pixel>(pixels[0].size(), Pixel(color, color, color)));
+    pixels.push_back(
+        vector<Pixel>(pixels[0].size(), Pixel(color, color, color)));
     for (int j = 0; j < (int)pixels.size(); j++) {
       pixels[j].insert(pixels[j].begin(), Pixel(color, color, color));
       pixels[j].push_back(Pixel(color, color, color));
