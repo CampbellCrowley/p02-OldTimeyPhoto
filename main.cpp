@@ -8,6 +8,9 @@
 using namespace std;
 
 // Returns num after rectifying between min and max.
+// TODO: Move to CampbellLib.
+// TODO: Support min and max being limits instead and not require the lesser
+// value first.
 float Rectify(float num, float min, float max) {
   return ((num < min ? min : (num > max ? max : num)));
 }
@@ -17,10 +20,6 @@ bool isValidOutPath(string filename) {
   std::ofstream file(filename.c_str(), std::ios::out | std::ios::binary);
 
   if (file.fail()) {
-    cerr << Campbell::Color::red << filename
-         << " could not be opened for editing. Is it already open by another "
-            "program or is it read-only?\n"
-         << Campbell::Color::reset;
     file.close();
     return false;
   } else {
@@ -109,6 +108,8 @@ bool Main(string inPath, string outPath, bool moreOpts = true) {
         float newBlue = Rectify(pixels[i][j].blue += rand() % 50 - 25, 0, 255);
         pixels[i][j] = Pixel(newRed, newGreen, newBlue);
       } else if (!invertColors) {
+        // Nothing to do here. Exit loop. Too lazy to wrap in if statement. This
+        // works.
         i = pixels.size();
         break;
       }
@@ -117,7 +118,7 @@ bool Main(string inPath, string outPath, bool moreOpts = true) {
 
   // Add Border
   for (int i = 0; i < borderWidth; i++) {
-    // Half the border is white, then black.
+    // Half the border is black, then white. (in -> out)
     int color = (i < borderWidth / 2) ? 0 : 255;
     pixels.insert(
         pixels.begin(),
@@ -130,7 +131,8 @@ bool Main(string inPath, string outPath, bool moreOpts = true) {
     }
   }
 
-  // TODO: Determine if this fails.
+  // Don't need to check if this fails since user-input shouldn't cause this to
+  // fail. Only poor implementation would.
   bmp.fromPixelMatrix(pixels);
 
   // Determine output location.
@@ -143,14 +145,21 @@ bool Main(string inPath, string outPath, bool moreOpts = true) {
     if (outPath.length() < 1) {
       outPath = "oldtimey.bmp";
     }
-    if (!isValidOutPath(outPath)) {
-      outPath = "";
-    } else {
+    if (isValidOutPath(outPath)) {
       break;
+    } else {
+      cerr << Campbell::Color::red << outPath
+           << " could not be opened for editing. Is it already open by another "
+              "program or is it read-only?\n"
+           << Campbell::Color::reset;
+      outPath = "";
     }
   }
 
   // Save file.
+  // bitmap.h does not provide an interface for checking whether this succeeds
+  // of not. The best I can do is assume my previous checks were good enough to
+  // verify the result will succeed.
   bmp.save(outPath);
 
   cout << Campbell::Color::green << "File saved to " << outPath << endl
@@ -169,7 +178,8 @@ int main(int argc, char *argv[]) {
   string inPath = "";
   string outPath = "";
   bool moreOpts = true;
-  // Read arguments passed in from the command line.
+  // Read arguments passed in from the command line. (argv[0] is the binary
+  // being executed)
   if (argc >= 2) {
     inPath = argv[1];
   }
